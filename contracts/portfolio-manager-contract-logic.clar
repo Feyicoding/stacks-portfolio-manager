@@ -23,21 +23,21 @@
 
 ;; data maps and vars
 ;;
-;; Map: (user principal, asset principal) -> amount uint
+;; Map: {user: principal, asset: principal} -> {amount: uint}
 (define-map user-portfolios
-  ((user principal) (asset principal))
-  ((amount uint)))
+  { user: principal, asset: principal }
+  { amount: uint })
 
-;; Map: asset principal -> asset metadata
+;; Map: {asset: principal} -> {symbol: (buff 10), decimals: uint, is-active: bool}
 (define-map supported-assets
-  ((asset principal))
-  ((symbol (buff 10)) (decimals uint) (is-active bool)))
+  { asset: principal }
+  { symbol: (buff 10), decimals: uint, is-active: bool })
 
 ;; Contract owner
 (define-data-var contract-owner principal tx-sender)
 
-;; Portfolio lock status (user principal -> bool)
-(define-map portfolio-locked ((user principal)) ((locked bool)))
+;; Portfolio lock status {user: principal} -> {locked: bool}
+(define-map portfolio-locked { user: principal } { locked: bool })
 
 
 ;; private functions
@@ -56,7 +56,10 @@
 
 ;; Get user asset balance or default to 0
 (define-private (get-user-asset-balance (user principal) (asset principal))
-  (default-to u0 (get amount (default-to {amount: u0} (map-get? user-portfolios {user: user, asset: asset})))))
+  (let ((entry (map-get? user-portfolios {user: user, asset: asset})))
+    (match entry
+      portfolio (get amount portfolio)
+      u0)))
 
 ;; public functions
 ;;
