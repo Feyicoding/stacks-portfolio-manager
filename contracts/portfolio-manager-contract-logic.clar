@@ -23,10 +23,10 @@
 
 ;; data maps and vars
 ;;
-;; Map: user principal -> portfolio (map of asset -> amount)
+;; Map: (user principal, asset principal) -> amount uint
 (define-map user-portfolios
-  ((user principal))
-  ((assets (list 20 (tuple (asset principal) (amount uint))))))
+  ((user principal) (asset principal))
+  ((amount uint)))
 
 ;; Map: asset principal -> asset metadata
 (define-map supported-assets
@@ -54,9 +54,9 @@
 (define-private (is-owner (sender principal))
   (is-eq sender (var-get contract-owner)))
 
-;; Get user portfolio or default
-(define-private (get-user-portfolio (user principal))
-  (default-to {assets: (list)} (map-get? user-portfolios {user: user})))
+;; Get user asset balance or default to 0
+(define-private (get-user-asset-balance (user principal) (asset principal))
+  (default-to u0 (get amount (default-to {amount: u0} (map-get? user-portfolios {user: user, asset: asset})))))
 
 ;; public functions
 ;;
