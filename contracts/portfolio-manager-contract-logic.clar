@@ -26,7 +26,7 @@
 ;; Map: user principal -> portfolio (map of asset -> amount)
 (define-map user-portfolios
   ((user principal))
-  (assets (list 20 (tuple (asset principal) (amount uint)))))
+  ((assets (list 20 (tuple (asset principal) (amount uint))))))
 
 ;; Map: asset principal -> asset metadata
 (define-map supported-assets
