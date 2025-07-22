@@ -66,58 +66,47 @@
 
 ;; Deposit assets into portfolio
 (define-public (deposit (asset principal) (amount uint))
-  (if (not (is-principal asset)) ERR_INVALID_ASSET
-    (if (not (is-uint amount)) ERR_INVALID_AMOUNT
-      (if (not (is-asset-supported asset)) ERR_INVALID_ASSET
-        (let ((locked (default-to false (get locked (map-get? portfolio-locked {user: tx-sender})))))
-          (if locked ERR_PORTFOLIO_LOCKED
-            (let ((old-balance (get-user-asset-balance tx-sender asset)))
-              (map-set user-portfolios {user: tx-sender, asset: asset} {amount: (+ old-balance amount)})
-              (ok (+ old-balance amount)))))))))
+  (if (not (is-asset-supported asset)) ERR_INVALID_ASSET
+    (let ((locked (default-to false (get locked (map-get? portfolio-locked {user: tx-sender})))))
+      (if locked ERR_PORTFOLIO_LOCKED
+        (let ((old-balance (get-user-asset-balance tx-sender asset)))
+          (map-set user-portfolios {user: tx-sender, asset: asset} {amount: (+ old-balance amount)})
+          (ok (+ old-balance amount)))))))
 
 ;; Withdraw assets from portfolio
 (define-public (withdraw (asset principal) (amount uint))
-  (if (not (is-principal asset)) ERR_INVALID_ASSET
-    (if (not (is-uint amount)) ERR_INVALID_AMOUNT
-      (if (not (is-asset-supported asset)) ERR_INVALID_ASSET
-        (let ((locked (default-to false (get locked (map-get? portfolio-locked {user: tx-sender})))))
-          (if locked ERR_PORTFOLIO_LOCKED
-            (let ((old-balance (get-user-asset-balance tx-sender asset)))
-              (if (< old-balance amount) ERR_INSUFFICIENT_FUNDS
-                (begin
-                  (map-set user-portfolios {user: tx-sender, asset: asset} {amount: (- old-balance amount)})
-                  (ok (- old-balance amount)))))))))))
+  (if (not (is-asset-supported asset)) ERR_INVALID_ASSET
+    (let ((locked (default-to false (get locked (map-get? portfolio-locked {user: tx-sender})))))
+      (if locked ERR_PORTFOLIO_LOCKED
+        (let ((old-balance (get-user-asset-balance tx-sender asset)))
+          (if (< old-balance amount) ERR_INSUFFICIENT_FUNDS
+            (begin
+              (map-set user-portfolios {user: tx-sender, asset: asset} {amount: (- old-balance amount)})
+              (ok (- old-balance amount)))))))))
 
 ;; Add a new supported asset (owner only)
 (define-public (add-asset (asset principal) (symbol (buff 10)) (decimals uint))
-  (if (not (is-principal asset)) ERR_INVALID_ASSET
-    (if (not (is-buff symbol 10)) ERR_INVALID_ASSET
-      (if (not (is-uint decimals)) ERR_INVALID_ASSET
-        (if (not (is-owner tx-sender)) ERR_NOT_OWNER
-          (let ((exists (map-get? supported-assets {asset: asset})))
-            (if (is-some exists) ERR_ALREADY_EXISTS
-              (begin
-                (map-set supported-assets {asset: asset} {symbol: symbol, decimals: decimals, is-active: true})
-                (ok true)))))))))
+  (if (not (is-owner tx-sender)) ERR_NOT_OWNER
+    (let ((exists (map-get? supported-assets {asset: asset})))
+      (if (is-some exists) ERR_ALREADY_EXISTS
+        (begin
+          (map-set supported-assets {asset: asset} {symbol: symbol, decimals: decimals, is-active: true})
+          (ok true))))))
 
 ;; Lock a user's portfolio (owner only)
 (define-public (lock-portfolio (user principal))
-  (if (not (is-principal user)) ERR_UNAUTHORIZED
-    (if (not (is-owner tx-sender)) ERR_NOT_OWNER
-      (begin
-        (map-set portfolio-locked {user: user} {locked: true})
-        (ok true)))))
+  (if (not (is-owner tx-sender)) ERR_NOT_OWNER
+    (begin
+      (map-set portfolio-locked {user: user} {locked: true})
+      (ok true))))
 
 ;; Unlock a user's portfolio (owner only)
 (define-public (unlock-portfolio (user principal))
-  (if (not (is-principal user)) ERR_UNAUTHORIZED
-    (if (not (is-owner tx-sender)) ERR_NOT_OWNER
-      (begin
-        (map-set portfolio-locked {user: user} {locked: false})
-        (ok true)))))
+  (if (not (is-owner tx-sender)) ERR_NOT_OWNER
+    (begin
+      (map-set portfolio-locked {user: user} {locked: false})
+      (ok true))))
 
 ;; Get a user's asset balance (read-only)
 (define-read-only (get-portfolio (user principal) (asset principal))
-  (if (not (is-principal user)) u0
-    (if (not (is-principal asset)) u0
-      (get-user-asset-balance user asset))))
+  (get-user-asset-balance user asset))
